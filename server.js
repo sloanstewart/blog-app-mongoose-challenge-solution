@@ -3,8 +3,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const morgan = require('morgan');
 
-const {DATABASE_URL, PORT} = require('./config');
-const {BlogPost} = require('./models');
+const {DATABASE_URL,TEST_DATABASE_URL, PORT} = require('./config');
+const {Post} = require('./models');
 
 const app = express();
 
@@ -15,11 +15,14 @@ mongoose.Promise = global.Promise;
 
 
 app.get('/posts', (req, res) => {
-  BlogPost
+  Post
     .find()
     .exec()
     .then(posts => {
-      res.json(posts.map(post => post.apiRepr()));
+      res.json({
+        posts: posts.map(
+          (post) => post.apiRepr())
+      });
     })
     .catch(err => {
       console.error(err);
@@ -28,7 +31,7 @@ app.get('/posts', (req, res) => {
 });
 
 app.get('/posts/:id', (req, res) => {
-  BlogPost
+  Post
     .findById(req.params.id)
     .exec()
     .then(post => res.json(post.apiRepr()))
@@ -49,7 +52,7 @@ app.post('/posts', (req, res) => {
     }
   }
 
-  BlogPost
+  Post
     .create({
       title: req.body.title,
       content: req.body.content,
@@ -65,7 +68,7 @@ app.post('/posts', (req, res) => {
 
 
 app.delete('/posts/:id', (req, res) => {
-  BlogPost
+  Post
     .findByIdAndRemove(req.params.id)
     .exec()
     .then(() => {
@@ -93,7 +96,7 @@ app.put('/posts/:id', (req, res) => {
     }
   });
 
-  BlogPost
+  Post
     .findByIdAndUpdate(req.params.id, {$set: updated}, {new: true})
     .exec()
     .then(updatedPost => res.status(201).json(updatedPost.apiRepr()))
@@ -102,7 +105,7 @@ app.put('/posts/:id', (req, res) => {
 
 
 app.delete('/:id', (req, res) => {
-  BlogPosts
+  Posts
     .findByIdAndRemove(req.params.id)
     .exec()
     .then(() => {
@@ -122,7 +125,7 @@ app.use('*', function(req, res) {
 let server;
 
 // this function connects to our database, then starts the server
-function runServer(databaseUrl=DATABASE_URL, port=PORT) {
+function runServer(databaseUrl=TEST_DATABASE_URL, port=PORT) {
   return new Promise((resolve, reject) => {
     mongoose.connect(databaseUrl, err => {
       if (err) {
@@ -162,4 +165,4 @@ if (require.main === module) {
   runServer().catch(err => console.error(err));
 };
 
-module.exports = {runServer, app, closeServer};
+module.exports = {app, bodyParser, runServer, closeServer};
